@@ -1,0 +1,77 @@
+Fix the map experience and venue interaction.
+
+Current issues:
+- Venue pins are not accurate enough
+- Heat map is too large and too blended
+- It is hard to tell which exact venue is busy
+- Clicking one pin shows multiple venues, which is confusing
+- Bottom sheet covers too much of the screen
+- Trackpad map controls feel wrong on MacBook
+
+Make these changes:
+
+1. Accurate venue locations
+- Every venue must have a real latitude and longitude
+- Pins must sit exactly on the venue location, not just the suburb
+- Add/edit venue data so each venue includes:
+  - name
+  - full address
+  - latitude
+  - longitude
+- Use the exact coordinates for each venue where possible
+
+2. Pin behaviour
+- When I tap/click a venue pin, show ONLY that exact venue
+- Do not show nearby venues when a single pin is selected
+- If I tap a heat area with no exact pin, then show nearby venues
+- Make the selected pin visually obvious
+
+3. Heat map behaviour
+- Reduce heat radius
+- Make heat tighter and more precise around each venue
+- Heat should still softly spill into the nearby street area
+- Heat should not cover the whole suburb
+- Make it easy to tell which venue is hottest
+- Use separate heat pockets when venues are far enough apart
+- Only blend heat when venues are very close together
+
+4. Street energy
+- Add a subtle street-level glow around nightlife streets
+- This should represent people outside venues, lines, foot traffic, and street energy
+- Keep it lighter than the venue heat
+- Venue heat should still be the strongest signal
+
+5. Visual heat style
+- Keep the dark grey GTA-style map
+- Use smaller thermal heat blobs
+- Strongest heat should have a hot core
+- Outer heat should fade smoothly
+- Avoid huge blurry circles
+
+6. Map controls
+- Improve MacBook trackpad behaviour
+- Two-finger swipe should pan the map, not zoom
+- Pinch should zoom
+- Click and drag should also still pan
+- Disable scroll-wheel zoom if needed
+- Make map movement feel like Apple Maps or Google Maps
+
+7. Replace bottom sheet
+- Do not use a large bottom sheet on desktop/tablet
+- On wider screens, show selected venue info in a compact side panel on the right
+- On mobile, use a smaller bottom card that does not cover too much of the map
+- The venue panel should show only:
+  - venue image
+  - venue name
+  - address
+  - heat level as 🔥 icons
+  - entry price
+  - line/wait time
+  - closing status
+  - buttons: Going, Here Now, Left
+
+8. Keep everything fast
+- Reduce reading
+- Use icons and short labels
+- Make the map the main focus
+- Make the selected venue clear immediately
