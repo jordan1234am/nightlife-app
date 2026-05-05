@@ -36,7 +36,7 @@ const SEED_VENUES: Venue[] = [
     dressCode: "Smart casual",
     musicType: "Acoustic, chill vibes",
     description: "Relaxed beachside bar with great cocktails and ocean views. Perfect for a sunset drink or a laid-back date.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1566127992631-137a642a90f4?w=800&q=80",
     goodFor: ["Couples", "Small groups", "Sunset drinks"],
     notIdealFor: ["Big groups", "Late night clubbing"],
     recommendedReason: "Best sunset cocktails on the strip — book a table and let the ocean do the rest."
@@ -53,7 +53,7 @@ const SEED_VENUES: Venue[] = [
     dressCode: "Smart casual to dressy",
     musicType: "Commercial house, Top 40",
     description: "High-energy beachfront club with multiple bars and a pumping dancefloor. The go-to for a big night out on the GC.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1571266028243-d220c6853fa9?w=800&q=80",
     goodFor: ["Groups", "Dancing", "Late nights"],
     notIdealFor: ["Quiet catch-ups", "Early evenings"],
     recommendedReason: "If you want to actually dance tonight, this is the move. Gets going properly around 11pm."
@@ -70,7 +70,7 @@ const SEED_VENUES: Venue[] = [
     dressCode: "Dressy",
     musicType: "R&B, Hip Hop, Commercial",
     description: "GC's premier nightclub. Multiple levels, VIP areas, big-name DJs. The place to be seen on a Saturday night.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80",
     goodFor: ["Big groups", "VIP experience", "Dancing"],
     notIdealFor: ["Budget nights", "Casual drinks"],
     recommendedReason: "The biggest club on the coast. Go late, go dressy, go hard."
@@ -87,7 +87,7 @@ const SEED_VENUES: Venue[] = [
     dressCode: "Casual smart",
     musicType: "Laid back, indie, acoustic",
     description: "Iconic clifftop bar overlooking Burleigh Beach. One of the most beautiful spots on the GC for a drink.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
     goodFor: ["Couples", "Catch-ups", "Sundowners"],
     notIdealFor: ["Clubbing", "Late nights"],
     recommendedReason: "Arguably the best view on the Gold Coast. Go for sundowners and stay for dinner."
@@ -104,7 +104,7 @@ const SEED_VENUES: Venue[] = [
     dressCode: "Casual",
     musicType: "Live bands, acoustic sets, eclectic",
     description: "GC's favourite street food market with live music, craft beers and heaps of food stalls. Great atmosphere, great value.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80",
     goodFor: ["Families", "Groups", "Foodies", "Music lovers"],
     notIdealFor: ["Clubbers", "Late night crowd"],
     recommendedReason: "Best value night out on the GC. Great food, live music, zero pretense."
@@ -121,7 +121,7 @@ const SEED_VENUES: Venue[] = [
     dressCode: "Casual",
     musicType: "Pop, Commercial, Party hits",
     description: "Lively pub with great food, drinks specials and a fun party atmosphere. Always a good time.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1543007630-9359815b6b5c?w=800&q=80",
     goodFor: ["Groups", "Budget nights", "Pub lovers"],
     notIdealFor: ["Quiet evenings", "Couples"],
     recommendedReason: "Cold beer, good pub food, and a crowd that's actually having fun. Solid every time."
@@ -138,7 +138,7 @@ const SEED_VENUES: Venue[] = [
     dressCode: "Smart casual",
     musicType: "Ambient, indie",
     description: "Rooftop pizza bar and cocktail lounge in the heart of Burleigh. Great vibes for a date or a group dinner.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1559524071-1fdcf9f98b88?w=800&q=80",
     goodFor: ["Couples", "Foodies", "Rooftop lovers"],
     notIdealFor: ["Big groups", "Night owls"],
     recommendedReason: "Best rooftop in Burleigh. The pizza is legit and the cocktail list is long."
@@ -155,7 +155,7 @@ const SEED_VENUES: Venue[] = [
     dressCode: "Casual",
     musicType: "Live rock, cover bands, local artists",
     description: "Legendary live music pub at the southern end of the GC. Great local bands, good prices, real pub culture.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1501612780327-45045538702b?w=800&q=80",
     goodFor: ["Music lovers", "Locals", "Budget nights"],
     notIdealFor: ["Clubbers", "Fancy nights"],
     recommendedReason: "The most authentic pub on the GC. Live music every weekend and the cheapest drinks around."
