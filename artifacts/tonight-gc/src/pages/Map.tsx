@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { useLocation } from "wouter";
 import { MapContainer, TileLayer, CircleMarker, useMap, useMapEvents } from "react-leaflet";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Flame, DollarSign, Clock, Users, MapPin } from "lucide-react";
+import { X, Flame, DollarSign, Clock, Users, MapPin, Ticket, Timer } from "lucide-react";
 import L from "leaflet";
-import { getVenues, getVenueHeatAtStep, SUBURBS, SuburbType, Venue, VibeType } from "@/data/venues";
+import { getVenues, getVenueHeatAtStep, SUBURBS, SuburbType, Venue, VibeType, parseTimeToStep } from "@/data/venues";
 import {
   GC_CENTER, GC_ZOOM, formatTimeStep, getHeatAtStep,
   SUBURB_COORDS, TIME_STEP_MIN, TIME_STEP_MAX, DEFAULT_TIME_STEP,
@@ -180,26 +180,46 @@ function HeatLayer({ venues, timeStep }: { venues: Venue[]; timeStep: number }) 
 }
 
 // ─── MacBook trackpad controls ────────────────────────────────────────────────
-// On Mac: scroll wheel fires wheel events (ctrlKey=false = two-finger pan).
-//         Pinch fires wheel events with ctrlKey=true.
-// We intercept all wheel events, pan for swipe and zoom for pinch.
+// Mac trackpad fires WheelEvent:
+//   ctrlKey=true  → pinch gesture (spread = zoom in, pinch = zoom out)
+//   ctrlKey=false → two-finger swipe (pan)
+// zoomSnap={0} on MapContainer lets Leaflet accept fractional zoom so pinch
+// feels smooth and continuous, just like Safari / Apple Maps.
 function TrackpadControls() {
   const map = useMap();
+  const pendingZoom = useRef(0);
+  const rafId = useRef<number | null>(null);
+
   useEffect(() => {
     const container = map.getContainer();
+
+    const flushZoom = () => {
+      if (pendingZoom.current === 0) return;
+      const next = Math.max(9, Math.min(19, map.getZoom() + pendingZoom.current));
+      map.setZoom(next, { animate: false });
+      pendingZoom.current = 0;
+    };
+
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       if (e.ctrlKey) {
-        // Pinch-to-zoom
-        const delta = -e.deltaY * 0.008;
-        map.setZoom(Math.max(10, Math.min(18, map.getZoom() + delta)), { animate: false });
+        // Pinch gesture: negative deltaY = spread fingers = zoom in
+        pendingZoom.current += -e.deltaY * 0.012;
+        if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+        rafId.current = requestAnimationFrame(flushZoom);
       } else {
-        // Two-finger swipe → pan
-        map.panBy([e.deltaX * 1.4, e.deltaY * 1.4], { animate: false });
+        // Two-finger swipe → pan only (scale factor 1 = 1:1 with finger speed)
+        map.panBy([e.deltaX, e.deltaY], { animate: false });
       }
     };
-    container.addEventListener("wheel", onWheel, { passive: false });
-    return () => container.removeEventListener("wheel", onWheel);
+
+    // Must be non-passive so we can preventDefault
+    container.addEventListener("wheel", onWheel, { passive: false, capture: true });
+    return () => {
+      container.removeEventListener("wheel", onWheel, { capture: true });
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+    };
   }, [map]);
   return null;
 }
@@ -277,9 +297,29 @@ function MapClickHandler({
   return null;
 }
 
+// ─── Venue panel derived stats ────────────────────────────────────────────────
+function entryPrice(priceLevel: 1 | 2 | 3): string {
+  return priceLevel === 1 ? "Free" : priceLevel === 2 ? "~$10" : "~$20";
+}
+function drinkPrice(priceLevel: 1 | 2 | 3): string {
+  return priceLevel === 1 ? "$8-12" : priceLevel === 2 ? "$14-18" : "$18+";
+}
+function waitTime(heat: number): string {
+  if (heat < 25) return "No queue";
+  if (heat < 50) return "~5 min";
+  if (heat < 72) return "~15 min";
+  return "~25 min";
+}
+function closingStatus(venue: Venue, timeStep: number): string {
+  const closeStep = parseTimeToStep(venue.closingTime);
+  if (timeStep >= closeStep) return "Closed";
+  if (timeStep >= closeStep - 4) return "Closing soon";
+  return `Until ${venue.closingTime}`;
+}
+
 // ─── Venue panel — compact, responsive ───────────────────────────────────────
-// Mobile:  compact bottom card (≈220px tall), rounded-t-3xl
-// Desktop: floating right panel (w-72), appears beside the map
+// Mobile:  compact bottom card, rounded-t-3xl
+// Desktop: floating right panel (w-72)
 function VenuePanel({
   venue, timeStep, onClose,
 }: {
@@ -291,6 +331,7 @@ function VenuePanel({
   const heat = getVenueHeatAtStep(venue, timeStep);
   const flameCount = Math.max(1, Math.round((heat / 100) * 5));
   const pinColor = heatToHex(heat);
+  const isClosed = closingStatus(venue, timeStep) === "Closed";
 
   const handleStatus = (status: "going" | "here" | null) => {
     if (status === null) { onClose(); return; }
@@ -307,6 +348,17 @@ function VenuePanel({
     Busy: "Busy", Mid: "Mid", Dead: "Dead", "Good Music": "Music", Expensive: "Pricey",
   };
 
+  // Info pill component
+  const Pill = ({ icon, label, value, warn }: { icon: React.ReactNode; label: string; value: string; warn?: boolean }) => (
+    <div className="flex items-center gap-2 py-2 px-2.5 rounded-xl bg-zinc-900/70 border border-zinc-800/60">
+      <span className="shrink-0" style={{ color: warn ? "#f87171" : pinColor }}>{icon}</span>
+      <div className="min-w-0">
+        <p className="text-zinc-600 text-[9px] uppercase tracking-widest leading-none mb-0.5">{label}</p>
+        <p className={cn("text-xs font-bold leading-none", warn ? "text-red-400" : "text-white")}>{value}</p>
+      </div>
+    </div>
+  );
+
   return (
     <motion.div
       key={venue.id}
@@ -315,10 +367,8 @@ function VenuePanel({
       exit={{ y: 40, opacity: 0 }}
       transition={{ type: "spring", damping: 32, stiffness: 380 }}
       className={cn(
-        // Mobile: bottom card
         "absolute bottom-0 left-0 right-0 z-[1200]",
         "rounded-t-3xl border-t border-zinc-800/80",
-        // Desktop: right-side panel
         "md:bottom-auto md:top-14 md:right-4 md:left-auto md:w-72",
         "md:rounded-2xl md:border",
         "bg-zinc-950/96 backdrop-blur-xl",
@@ -327,74 +377,80 @@ function VenuePanel({
     >
       {/* Image header */}
       <div className="relative overflow-hidden rounded-t-3xl md:rounded-t-2xl"
-        style={{ height: "clamp(80px, 22vw, 140px)" }}>
+        style={{ height: "clamp(80px, 20vw, 130px)" }}>
         {venue.imageUrl ? (
-          <img src={venue.imageUrl} alt={venue.name}
-            className="w-full h-full object-cover" />
+          <img src={venue.imageUrl} alt={venue.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-zinc-800" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent" />
 
         <button
           onClick={onClose}
-          className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center"
+          className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-black/70 flex items-center justify-center"
           data-testid="btn-close-venue-panel"
         >
           <X className="h-3 w-3 text-white/70" />
         </button>
 
-        <div className="absolute bottom-2.5 left-3.5">
-          <h3 className="text-white font-display font-bold text-base leading-tight drop-shadow">
+        <div className="absolute bottom-2.5 left-3.5 right-10">
+          <h3 className="text-white font-display font-bold text-sm leading-tight drop-shadow truncate">
             {venue.name}
           </h3>
-          <p className="text-xs font-medium" style={{ color: pinColor }}>{venue.suburb}</p>
+          {"address" in venue && venue.address && (
+            <p className="text-zinc-400 text-[10px] flex items-center gap-0.5 mt-0.5 truncate">
+              <MapPin className="h-2.5 w-2.5 shrink-0" />
+              {venue.address as string}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Info row */}
-      <div className="px-3.5 pt-3 pb-2.5 border-b border-zinc-800/60">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1 space-y-1">
-            {/* Address */}
-            {"address" in venue && venue.address && (
-              <p className="text-zinc-500 text-[11px] flex items-center gap-1 truncate">
-                <MapPin className="h-3 w-3 shrink-0" />
-                {venue.address as string}
-              </p>
-            )}
-            {/* Heat + price */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Flame
-                    key={i}
-                    className={cn("h-3 w-3", i < flameCount ? "fill-current" : "opacity-15")}
-                    style={i < flameCount ? { color: pinColor } : {}}
-                  />
-                ))}
-              </div>
-              <span className="text-zinc-400 text-[11px] font-semibold">
-                {"$".repeat(venue.priceLevel)}
-              </span>
-              <span className="flex items-center gap-0.5 text-zinc-500 text-[11px]">
-                <Clock className="h-3 w-3" />
-                {venue.closingTime}
-              </span>
-            </div>
-          </div>
-          {/* Here now */}
-          <div className="flex items-center gap-1 shrink-0">
-            <Users className="h-3.5 w-3.5" style={{ color: pinColor }} />
-            <span className="text-sm font-bold" style={{ color: pinColor }}>
-              {interaction.hereNow}
-            </span>
+      {/* Crowd flames + here now */}
+      <div className="px-3.5 pt-3 pb-2 flex items-center justify-between">
+        <div className="flex items-center gap-0.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Flame
+              key={i}
+              className={cn("h-3.5 w-3.5", i < flameCount ? "fill-current" : "opacity-12")}
+              style={i < flameCount ? { color: pinColor } : {}}
+            />
+          ))}
+          <span className="ml-1.5 text-zinc-500 text-[11px] font-medium">{heat}% capacity</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Users className="h-3.5 w-3.5" style={{ color: pinColor }} />
+          <span className="text-sm font-bold" style={{ color: pinColor }}>{interaction.hereNow}</span>
+          <span className="text-zinc-600 text-[10px]">here</span>
+        </div>
+      </div>
+
+      {/* Info grid — 3 across */}
+      <div className="px-3.5 pb-2.5 grid grid-cols-3 gap-1.5 border-b border-zinc-800/50">
+        <Pill icon={<Ticket className="h-3 w-3" />} label="Entry" value={entryPrice(venue.priceLevel)} />
+        <Pill icon={<Timer className="h-3 w-3" />} label="Queue" value={waitTime(heat)} />
+        <Pill
+          icon={<Clock className="h-3 w-3" />}
+          label="Closes"
+          value={closingStatus(venue, timeStep)}
+          warn={isClosed}
+        />
+        <Pill icon={<DollarSign className="h-3 w-3" />} label="Drinks" value={drinkPrice(venue.priceLevel)} />
+        <div className="col-span-2 flex items-center gap-2 py-2 px-2.5 rounded-xl bg-zinc-900/70 border border-zinc-800/60">
+          <span className="shrink-0" style={{ color: pinColor }}>
+            <Flame className="h-3 w-3 fill-current" />
+          </span>
+          <div>
+            <p className="text-zinc-600 text-[9px] uppercase tracking-widest leading-none mb-0.5">Tags</p>
+            <p className="text-white text-[10px] font-semibold leading-none truncate">
+              {venue.tags.slice(0, 3).join(" · ")}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Action buttons */}
-      <div className="px-3.5 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+      <div className="px-3.5 py-3 pb-[max(14px,env(safe-area-inset-bottom))]">
         <AnimatePresence mode="wait">
           {!showVibes ? (
             <motion.div
@@ -410,10 +466,10 @@ function VenuePanel({
                     key={i}
                     onClick={() => handleStatus(s)}
                     className={cn(
-                      "py-3 rounded-xl text-xs font-bold border transition-all",
-                      isActive ? "text-white" : "bg-zinc-900 border-zinc-700/80 text-zinc-300 hover:border-zinc-500",
+                      "py-2.5 rounded-xl text-xs font-bold border transition-all",
+                      isActive ? "" : "bg-zinc-900 border-zinc-700/80 text-zinc-300 hover:border-zinc-500",
                     )}
-                    style={isActive ? { background: `${pinColor}33`, borderColor: pinColor, color: pinColor } : {}}
+                    style={isActive ? { background: `${pinColor}28`, borderColor: pinColor, color: pinColor } : {}}
                     data-testid={`btn-status-${labels[i].toLowerCase().replace(/\s/g, "-")}`}
                   >
                     {labels[i]}
@@ -426,7 +482,7 @@ function VenuePanel({
               key="vibes"
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             >
-              <p className="text-zinc-500 text-[10px] uppercase tracking-widest font-semibold mb-2 text-center">
+              <p className="text-zinc-600 text-[10px] uppercase tracking-widest font-semibold mb-2 text-center">
                 What's the vibe?
               </p>
               <div className="flex flex-wrap gap-1.5 justify-center">
@@ -436,9 +492,9 @@ function VenuePanel({
                     onClick={() => handleVibeTag(tag)}
                     className={cn(
                       "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all",
-                      vote.vibeTag === tag ? "text-white" : "bg-zinc-900 border-zinc-700 text-zinc-300",
+                      vote.vibeTag === tag ? "" : "bg-zinc-900 border-zinc-700 text-zinc-300",
                     )}
-                    style={vote.vibeTag === tag ? { background: `${pinColor}33`, borderColor: pinColor, color: pinColor } : {}}
+                    style={vote.vibeTag === tag ? { background: `${pinColor}28`, borderColor: pinColor, color: pinColor } : {}}
                     data-testid={`btn-vibe-${tag.toLowerCase().replace(/\s/g, "-")}`}
                   >
                     {VIBE_LABELS[tag]}
@@ -556,6 +612,115 @@ function SuburbSheet({
   );
 }
 
+// ─── Night heat timeline ──────────────────────────────────────────────────────
+// A gradient track that visually encodes GC-wide nightlife energy across the
+// evening. Each colour stop is tuned to the real peak-heat profile from mapData:
+//   6pm → deep indigo (quiet)
+//   9pm → violet (warming up)
+//   11pm–1am → red/orange (peak)
+//   3am+ → violet → indigo (tapering)
+//   6am → near black (done)
+const HEAT_GRADIENT =
+  "linear-gradient(to right," +
+  "#0f0a2a 0%," +     // 6pm
+  "#1a1060 8%," +     // 7pm
+  "#4c1d95 17%," +    // 8pm — purple builds
+  "#7c3aed 28%," +    // 9:30pm
+  "#c026d3 41%," +    // 11pm — electric magenta
+  "#e11d48 50%," +    // 12am — red hot peak
+  "#f97316 58%," +    // 1am — orange
+  "#e11d48 67%," +    // 2am — tapering red
+  "#9333ea 75%," +    // 3am — violet
+  "#4f46e5 83%," +    // 4am — indigo
+  "#1e3a5f 91%," +    // 5am
+  "#0a0a14 100%" +    // 6am
+  ")";
+
+function timeToThumbColor(step: number): string {
+  const t = step / TIME_STEP_MAX;
+  if (t < 0.17) return "#4c1d95";
+  if (t < 0.28) return "#7c3aed";
+  if (t < 0.41) return "#c026d3";
+  if (t < 0.54) return "#e11d48";
+  if (t < 0.62) return "#f97316";
+  if (t < 0.70) return "#e11d48";
+  if (t < 0.78) return "#9333ea";
+  if (t < 0.88) return "#4f46e5";
+  return "#1e3a5f";
+}
+
+function HeatTimeline({ timeStep, onChange }: { timeStep: number; onChange: (s: number) => void }) {
+  const pct = (timeStep - TIME_STEP_MIN) / (TIME_STEP_MAX - TIME_STEP_MIN);
+  const glowColor = timeToThumbColor(timeStep);
+  const timeLabel = formatTimeStep(timeStep);
+
+  // CSS calc trick: left = pct*(100% - 20px) + 10px
+  // This places the centre of a 20px thumb at the correct track position
+  // without needing a JS ResizeObserver.
+  const thumbStyle = {
+    left: `calc(${pct * 100}% - ${pct * 20}px + 10px)`,
+    transform: "translateX(-50%)",
+  };
+
+  return (
+    <div className="px-5 pb-[max(28px,env(safe-area-inset-bottom))] pt-3">
+      {/* Floating time label — tracks the thumb */}
+      <div className="relative h-9 mb-1 pointer-events-none">
+        <div
+          className="absolute bottom-0 whitespace-nowrap"
+          style={{ ...thumbStyle, transform: "translateX(-50%)" }}
+        >
+          <span
+            className="text-white font-display font-black text-2xl tracking-tight"
+            style={{ textShadow: `0 0 24px ${glowColor}` }}
+          >
+            {timeLabel}
+          </span>
+        </div>
+      </div>
+
+      {/* Track */}
+      <div
+        className="relative h-3 rounded-full overflow-visible"
+        style={{ background: HEAT_GRADIENT }}
+      >
+        {/* Glowing thumb (visual only) */}
+        <div
+          className="absolute top-1/2 w-5 h-5 rounded-full border-2 border-white/90 pointer-events-none"
+          style={{
+            ...thumbStyle,
+            marginTop: "-10px",
+            background: glowColor,
+            boxShadow: `0 0 0 3px ${glowColor}55, 0 0 18px ${glowColor}`,
+          }}
+        />
+
+        {/* Invisible range input — handles all interaction */}
+        <input
+          type="range"
+          min={TIME_STEP_MIN}
+          max={TIME_STEP_MAX}
+          step={1}
+          value={timeStep}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="absolute inset-0 w-full opacity-0 cursor-pointer"
+          style={{ height: "100%", margin: 0 }}
+          data-testid="time-slider"
+        />
+      </div>
+
+      {/* Hour labels */}
+      <div className="flex justify-between text-[10px] text-zinc-600 mt-2 font-medium select-none">
+        <span>6pm</span>
+        <span>9pm</span>
+        <span>12am</span>
+        <span>3am</span>
+        <span>6am</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Map page ─────────────────────────────────────────────────────────────────
 export default function Map() {
   const [, setLocation] = useLocation();
@@ -582,8 +747,8 @@ export default function Map() {
 
   const handleCloseVenue = useCallback(() => setSelectedVenue(null), []);
 
-  const sliderFill = ((timeStep - TIME_STEP_MIN) / (TIME_STEP_MAX - TIME_STEP_MIN)) * 100;
-  const showSlider = !selectedSuburb && !selectedVenue;
+  // Timeline always visible — disappears only when a sheet is open on mobile
+  const showTimeline = !selectedSuburb && !selectedVenue;
 
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden bg-[#0d0e1a]">
@@ -593,6 +758,9 @@ export default function Map() {
         zoomControl={false}
         attributionControl={false}
         scrollWheelZoom={false}
+        // zoomSnap=0 → Leaflet accepts fractional zoom so pinch is continuous
+        zoomSnap={0}
+        zoomDelta={1}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 10 }}
       >
         <TileLayer
@@ -639,32 +807,18 @@ export default function Map() {
         )}
       </div>
 
-      {/* Time slider — always visible */}
+      {/* Heat timeline — always visible when no sheet is open */}
       <AnimatePresence>
-        {showSlider && (
+        {showTimeline && (
           <motion.div
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
-            className="absolute bottom-0 left-0 right-0 z-[1000] px-5 pb-10 pt-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.2 }}
+            className="absolute bottom-0 left-0 right-0 z-[1000] bg-gradient-to-t from-black/85 via-black/50 to-transparent pointer-events-none"
           >
-            <div className="text-center mb-3">
-              <span className="text-white text-3xl font-display font-black tracking-tight"
-                style={{ textShadow: "0 0 20px rgba(168,85,247,0.6)" }}>
-                {formatTimeStep(timeStep)}
-              </span>
-            </div>
-            <input
-              type="range"
-              min={TIME_STEP_MIN} max={TIME_STEP_MAX} step={1}
-              value={timeStep}
-              onChange={(e) => setTimeStep(Number(e.target.value))}
-              className="time-slider pointer-events-auto"
-              style={{
-                background: `linear-gradient(to right, #a855f7 0%, #ec4899 ${sliderFill}%, rgba(255,255,255,0.08) ${sliderFill}%, rgba(255,255,255,0.08) 100%)`,
-              }}
-              data-testid="time-slider"
-            />
-            <div className="flex justify-between text-[10px] text-zinc-600 mt-2 font-medium">
-              <span>6pm</span><span>10pm</span><span>2am</span><span>6am</span>
+            <div className="pointer-events-auto">
+              <HeatTimeline timeStep={timeStep} onChange={setTimeStep} />
             </div>
           </motion.div>
         )}
