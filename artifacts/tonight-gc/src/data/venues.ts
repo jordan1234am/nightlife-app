@@ -93,7 +93,10 @@ export const SEED_VENUE_IDS: string[] = [
   "coolangatta-hotel",
 ];
 
-// ─── Seed venues — precise GC coordinates ────────────────────────────────────
+// ─── Seed venues — real building coordinates ──────────────────────────────────
+// TO EDIT COORDINATES: Google Maps → right-click the building → copy lat,lng
+// Each venue has: lat: <decimal degrees>, lng: <decimal degrees>
+// Negative lat = south (Gold Coast), positive lng = east (Australia east coast)
 const SEED_VENUES: Venue[] = [
 
   // ── SURFERS PARADISE (Orchid Ave / Cavill Ave strip) ─────────────────────
@@ -102,7 +105,8 @@ const SEED_VENUES: Venue[] = [
     name: "Surfers Pavilion",
     suburb: "Surfers Paradise",
     address: "Cavill Ave, Surfers Paradise",
-    lat: -28.0042, lng: 153.4318,
+    // Beachside end of Cavill Ave — on The Esplanade
+    lat: -28.0034, lng: 153.4317,
     imageUrl: "https://images.unsplash.com/photo-1566127992631-137a642a90f4?w=800&q=80",
     peakTime: "8pm", closingTime: "11pm",
     priceLevel: 2, activityScore: 58,
@@ -120,7 +124,8 @@ const SEED_VENUES: Venue[] = [
     name: "Cali Beach",
     suburb: "Surfers Paradise",
     address: "The Esplanade, Surfers Paradise",
-    lat: -28.0010, lng: 153.4308,
+    // Northern Esplanade beachfront
+    lat: -28.0007, lng: 153.4309,
     imageUrl: "https://images.unsplash.com/photo-1571266028243-d220c6853fa9?w=800&q=80",
     peakTime: "12am", closingTime: "4am",
     priceLevel: 2, activityScore: 82,
@@ -138,7 +143,8 @@ const SEED_VENUES: Venue[] = [
     name: "The Avenue",
     suburb: "Surfers Paradise",
     address: "9 Orchid Ave, Surfers Paradise",
-    lat: -28.0018, lng: 153.4294,
+    // 9 Orchid Ave — north end of the Orchid Ave nightclub strip
+    lat: -28.0013, lng: 153.4282,
     imageUrl: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80",
     peakTime: "1am", closingTime: "5am",
     priceLevel: 3, activityScore: 92,
@@ -156,7 +162,8 @@ const SEED_VENUES: Venue[] = [
     name: "SinCity",
     suburb: "Surfers Paradise",
     address: "22 Orchid Ave, Surfers Paradise",
-    lat: -28.0027, lng: 153.4291,
+    // 22 Orchid Ave — mid-strip
+    lat: -28.0020, lng: 153.4280,
     imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80",
     peakTime: "12am", closingTime: "4am",
     priceLevel: 2, activityScore: 85,
@@ -174,7 +181,8 @@ const SEED_VENUES: Venue[] = [
     name: "Bedroom Lounge Bar",
     suburb: "Surfers Paradise",
     address: "Orchid Ave, Surfers Paradise",
-    lat: -28.0033, lng: 153.4298,
+    // Orchid Ave south section
+    lat: -28.0028, lng: 153.4278,
     imageUrl: "https://images.unsplash.com/photo-1575444758702-4a6b9222336e?w=800&q=80",
     peakTime: "11pm", closingTime: "3am",
     priceLevel: 2, activityScore: 72,
@@ -194,7 +202,8 @@ const SEED_VENUES: Venue[] = [
     name: "Loose Moose",
     suburb: "Broadbeach",
     address: "Surf Parade, Broadbeach",
-    lat: -28.0278, lng: 153.4325,
+    // Surf Parade — main Broadbeach dining/bar strip
+    lat: -28.0275, lng: 153.4323,
     imageUrl: "https://images.unsplash.com/photo-1543007630-9359815b6b5c?w=800&q=80",
     peakTime: "9pm", closingTime: "1am",
     priceLevel: 1, activityScore: 70,
@@ -212,7 +221,8 @@ const SEED_VENUES: Venue[] = [
     name: "Roosevelt Lounge",
     suburb: "Broadbeach",
     address: "Albert Ave, Broadbeach",
-    lat: -28.0265, lng: 153.4313,
+    // Albert Ave corner, Broadbeach
+    lat: -28.0267, lng: 153.4309,
     imageUrl: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=800&q=80",
     peakTime: "9pm", closingTime: "1am",
     priceLevel: 3, activityScore: 62,
@@ -230,7 +240,8 @@ const SEED_VENUES: Venue[] = [
     name: "Kurrawa Beach Club",
     suburb: "Broadbeach",
     address: "Kurrawa Esplanade, Broadbeach",
-    lat: -28.0338, lng: 153.4340,
+    // Kurrawa Beach, southern Broadbeach beachfront
+    lat: -28.0342, lng: 153.4344,
     imageUrl: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80",
     peakTime: "8pm", closingTime: "12am",
     priceLevel: 2, activityScore: 68,
@@ -250,7 +261,8 @@ const SEED_VENUES: Venue[] = [
     name: "Burleigh Pavilion",
     suburb: "Burleigh",
     address: "43 Goodwin Tce, Burleigh Heads",
-    lat: -28.0841, lng: 153.4549,
+    // 43 Goodwin Tce — clifftop on Burleigh Heads headland (user-verified)
+    lat: -28.0843, lng: 153.4550,
     imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
     peakTime: "7pm", closingTime: "10pm",
     priceLevel: 2, activityScore: 60,
@@ -268,7 +280,8 @@ const SEED_VENUES: Venue[] = [
     name: "Justin Lane",
     suburb: "Burleigh",
     address: "50 James St, Burleigh Heads",
-    lat: -28.0830, lng: 153.4540,
+    // 50 James St — James St rooftop strip, northern end
+    lat: -28.0826, lng: 153.4538,
     imageUrl: "https://images.unsplash.com/photo-1559524071-1fdcf9f98b88?w=800&q=80",
     peakTime: "8pm", closingTime: "11pm",
     priceLevel: 2, activityScore: 65,
@@ -286,7 +299,8 @@ const SEED_VENUES: Venue[] = [
     name: "Burleigh Hotel",
     suburb: "Burleigh",
     address: "2 Gold Coast Hwy, Burleigh Heads",
-    lat: -28.0865, lng: 153.4528,
+    // Corner of Gold Coast Hwy & James St — landmark heritage pub
+    lat: -28.0862, lng: 153.4523,
     imageUrl: "https://images.unsplash.com/photo-1566827010894-00e2b0a6d73a?w=800&q=80",
     peakTime: "10pm", closingTime: "2am",
     priceLevel: 1, activityScore: 75,
@@ -304,7 +318,8 @@ const SEED_VENUES: Venue[] = [
     name: "Pink Monkey",
     suburb: "Burleigh",
     address: "66 James St, Burleigh Heads",
-    lat: -28.0848, lng: 153.4543,
+    // 66 James St — mid-James St strip
+    lat: -28.0828, lng: 153.4543,
     imageUrl: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80",
     peakTime: "8pm", closingTime: "11pm",
     priceLevel: 2, activityScore: 60,
@@ -322,7 +337,8 @@ const SEED_VENUES: Venue[] = [
     name: "Lockwood Bar",
     suburb: "Burleigh",
     address: "James St, Burleigh Heads",
-    lat: -28.0857, lng: 153.4536,
+    // James St cocktail bar
+    lat: -28.0831, lng: 153.4540,
     imageUrl: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80",
     peakTime: "9pm", closingTime: "1am",
     priceLevel: 2, activityScore: 58,
@@ -342,7 +358,8 @@ const SEED_VENUES: Venue[] = [
     name: "Miami Marketta",
     suburb: "Miami",
     address: "23 Vernon St, Miami",
-    lat: -28.0672, lng: 153.4437,
+    // 23 Vernon St — industrial warehouse precinct
+    lat: -28.0673, lng: 153.4437,
     imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80",
     peakTime: "8pm", closingTime: "10pm",
     priceLevel: 1, activityScore: 60,
@@ -360,7 +377,8 @@ const SEED_VENUES: Venue[] = [
     name: "Granddad Jack's Distillery",
     suburb: "Miami",
     address: "2 Swim Lane, Miami One",
-    lat: -28.0660, lng: 153.4428,
+    // 2 Swim Lane — Miami One precinct, just north of Vernon St
+    lat: -28.0661, lng: 153.4428,
     imageUrl: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&q=80",
     peakTime: "7pm", closingTime: "10pm",
     priceLevel: 2, activityScore: 52,
@@ -378,7 +396,8 @@ const SEED_VENUES: Venue[] = [
     name: "The Henchman",
     suburb: "Miami",
     address: "18 Pacific Ave, Miami",
-    lat: -28.0680, lng: 153.4444,
+    // 18 Pacific Ave — beachside strip
+    lat: -28.0679, lng: 153.4445,
     imageUrl: "https://images.unsplash.com/photo-1525268323446-0505b6fe7778?w=800&q=80",
     peakTime: "8pm", closingTime: "11pm",
     priceLevel: 2, activityScore: 55,
@@ -396,7 +415,8 @@ const SEED_VENUES: Venue[] = [
     name: "Elsewhere",
     suburb: "Miami",
     address: "Pacific Ave, Miami",
-    lat: -28.0665, lng: 153.4432,
+    // Pacific Ave, Miami — near Vernon St intersection
+    lat: -28.0668, lng: 153.4434,
     imageUrl: "https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=800&q=80",
     peakTime: "8pm", closingTime: "11pm",
     priceLevel: 2, activityScore: 55,
@@ -416,7 +436,8 @@ const SEED_VENUES: Venue[] = [
     name: "Coolangatta Hotel",
     suburb: "Coolangatta",
     address: "2 Marine Pde, Coolangatta",
-    lat: -28.1652, lng: 153.5402,
+    // 2 Marine Pde — corner building on the Coolangatta beachfront
+    lat: -28.1654, lng: 153.5404,
     imageUrl: "https://images.unsplash.com/photo-1501612780327-45045538702b?w=800&q=80",
     peakTime: "10pm", closingTime: "2am",
     priceLevel: 1, activityScore: 72,

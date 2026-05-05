@@ -15,23 +15,39 @@ import {
 } from "@/data/interactions";
 import { cn } from "@/lib/utils";
 
-// ─── Color helpers ────────────────────────────────────────────────────────────
+// ─── Thermal colour helpers — blue (cold) → yellow (warm) → red (hot) ─────────
+// Five perceptually-distinct anchor stops; linear interpolation between each pair.
+// The visible range (heat 40-100) sweeps yellow → orange → red.
+// Low-heat venues (heat < 35) appear dark blue and have low canvas alpha so they
+// read as "cool background" without competing with the hot areas.
+const HEAT_STOPS: [number, number, number, number][] = [
+  [  0,   0,  35, 210], // deep blue (cold / quiet)
+  [ 30,  15,  90, 245], // bright blue (mild activity)
+  [ 55, 255, 215,   0], // yellow      (building)
+  [ 75, 255,  80,   0], // orange      (busy)
+  [100, 220,   0,   0], // red         (peak / packed)
+];
 function heatToRGB(heat: number): [number, number, number] {
-  if (heat >= 80) return [255, 80, 0];
-  if (heat >= 60) return [220, 20, 150];
-  if (heat >= 40) return [130, 0, 255];
-  if (heat >= 20) return [50, 20, 240];
-  return [15, 20, 200];
+  const t = Math.max(0, Math.min(100, heat));
+  for (let i = 0; i < HEAT_STOPS.length - 1; i++) {
+    const [h0, r0, g0, b0] = HEAT_STOPS[i];
+    const [h1, r1, g1, b1] = HEAT_STOPS[i + 1];
+    if (t <= h1) {
+      const u = (t - h0) / (h1 - h0);
+      return [Math.round(r0 + (r1 - r0) * u), Math.round(g0 + (g1 - g0) * u), Math.round(b0 + (b1 - b0) * u)];
+    }
+  }
+  return [220, 0, 0];
 }
 function coreRGB(heat: number): [number, number, number] {
-  if (heat >= 80) return [255, 220, 60];
-  if (heat >= 60) return [255, 120, 220];
-  if (heat >= 40) return [200, 80, 255];
-  return [80, 60, 255];
+  if (heat >= 70) return [255, 248, 200]; // near-white hot core
+  if (heat >= 50) return [255, 230,  60]; // bright yellow
+  return [255, 190,  20];                 // amber
 }
 function heatToHex(heat: number): string {
   const [r, g, b] = heatToRGB(heat);
-  return `rgb(${Math.min(255, Math.round(r * 2.2))},${Math.min(255, Math.round(g * 2.2))},${Math.min(255, Math.round(b * 2.2))})`;
+  // ×2 amplification so pins are vivid: deep-blue → yellow → red
+  return `rgb(${Math.min(255, r * 2)},${Math.min(255, g * 2)},${Math.min(255, b * 2)})`;
 }
 
 // ─── Street glow layer — subtle ambient energy around venues ──────────────────
@@ -205,7 +221,8 @@ function TrackpadControls() {
       e.stopPropagation();
       if (e.ctrlKey) {
         // Pinch gesture: negative deltaY = spread fingers = zoom in
-        pendingZoom.current += -e.deltaY * 0.012;
+        // 0.025 = responsive zoom matching Apple Maps spread speed
+        pendingZoom.current += -e.deltaY * 0.025;
         if (rafId.current !== null) cancelAnimationFrame(rafId.current);
         rafId.current = requestAnimationFrame(flushZoom);
       } else {
@@ -367,8 +384,10 @@ function VenuePanel({
       exit={{ y: 40, opacity: 0 }}
       transition={{ type: "spring", damping: 32, stiffness: 380 }}
       className={cn(
-        "absolute bottom-0 left-0 right-0 z-[1200]",
+        // Mobile: raised 112px above bottom so the heat timeline is always visible
+        "absolute bottom-[112px] left-0 right-0 z-[1200]",
         "rounded-t-3xl border-t border-zinc-800/80",
+        // Desktop: right-side floating panel, ignores bottom offset
         "md:bottom-auto md:top-14 md:right-4 md:left-auto md:w-72",
         "md:rounded-2xl md:border",
         "bg-zinc-950/96 backdrop-blur-xl",
@@ -571,7 +590,7 @@ function SuburbSheet({
       transition={{ type: "spring", damping: 30, stiffness: 360 }}
       drag="y" dragConstraints={{ top: 0 }} dragElastic={{ top: 0, bottom: 0.25 }}
       onDragEnd={(_e, i) => { if (i.offset.y > 80) onClose(); }}
-      className="absolute bottom-0 left-0 right-0 z-[1100] bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800/60 rounded-t-3xl md:right-auto md:w-[360px] md:rounded-2xl md:border md:bottom-auto md:left-4 md:top-14"
+      className="absolute bottom-[112px] left-0 right-0 z-[1100] bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800/60 rounded-t-3xl md:right-auto md:w-[360px] md:rounded-2xl md:border md:bottom-auto md:left-4 md:top-14"
       data-testid="suburb-sheet"
     >
       <div className="flex justify-center pt-2.5 pb-0.5 md:hidden">
@@ -620,33 +639,35 @@ function SuburbSheet({
 //   11pm–1am → red/orange (peak)
 //   3am+ → violet → indigo (tapering)
 //   6am → near black (done)
+// Timeline gradient matches the thermal palette:
+// deep blue (6pm quiet) → sky blue → yellow → orange → red (midnight peak) → cooling blue
 const HEAT_GRADIENT =
   "linear-gradient(to right," +
-  "#0f0a2a 0%," +     // 6pm
-  "#1a1060 8%," +     // 7pm
-  "#4c1d95 17%," +    // 8pm — purple builds
-  "#7c3aed 28%," +    // 9:30pm
-  "#c026d3 41%," +    // 11pm — electric magenta
-  "#e11d48 50%," +    // 12am — red hot peak
-  "#f97316 58%," +    // 1am — orange
-  "#e11d48 67%," +    // 2am — tapering red
-  "#9333ea 75%," +    // 3am — violet
-  "#4f46e5 83%," +    // 4am — indigo
-  "#1e3a5f 91%," +    // 5am
-  "#0a0a14 100%" +    // 6am
+  "#001a6e 0%,"   +    // 6pm  — deep navy (quiet)
+  "#0a3db5 10%,"  +    // 7pm  — blue
+  "#1a7fe0 20%,"  +    // 8pm  — bright blue
+  "#36bfee 30%,"  +    // 9pm  — sky blue (warming)
+  "#ffd000 40%,"  +    // 10pm — yellow  (building)
+  "#ff7800 48%,"  +    // 11pm — orange
+  "#e30000 54%,"  +    // 12am — peak red
+  "#ff7800 62%,"  +    // 1am  — orange (tapering)
+  "#ffd000 70%,"  +    // 2am  — yellow
+  "#1a7fe0 80%,"  +    // 3am  — blue (cooling)
+  "#0a3db5 90%,"  +    // 4am  — blue
+  "#001a6e 100%"  +    // 6am  — deep navy
   ")";
 
 function timeToThumbColor(step: number): string {
   const t = step / TIME_STEP_MAX;
-  if (t < 0.17) return "#4c1d95";
-  if (t < 0.28) return "#7c3aed";
-  if (t < 0.41) return "#c026d3";
-  if (t < 0.54) return "#e11d48";
-  if (t < 0.62) return "#f97316";
-  if (t < 0.70) return "#e11d48";
-  if (t < 0.78) return "#9333ea";
-  if (t < 0.88) return "#4f46e5";
-  return "#1e3a5f";
+  if (t < 0.12) return "#1a7fe0";  // 7pm  — blue
+  if (t < 0.25) return "#36bfee";  // 9pm  — sky blue
+  if (t < 0.40) return "#ffd000";  // 10pm — yellow
+  if (t < 0.50) return "#ff7800";  // 11pm — orange
+  if (t < 0.60) return "#e30000";  // 12am–1am — red
+  if (t < 0.70) return "#ff7800";  // 2am  — orange
+  if (t < 0.78) return "#ffd000";  // 3am  — yellow
+  if (t < 0.88) return "#1a7fe0";  // 4am  — blue
+  return "#0a3db5";                  // 5–6am — deep blue
 }
 
 function HeatTimeline({ timeStep, onChange }: { timeStep: number; onChange: (s: number) => void }) {
@@ -747,8 +768,8 @@ export default function Map() {
 
   const handleCloseVenue = useCallback(() => setSelectedVenue(null), []);
 
-  // Timeline always visible — disappears only when a sheet is open on mobile
-  const showTimeline = !selectedSuburb && !selectedVenue;
+  // Timeline is ALWAYS visible — venue panel and suburb sheet are offset above it
+  const showTimeline = true;
 
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden bg-[#0d0e1a]">
