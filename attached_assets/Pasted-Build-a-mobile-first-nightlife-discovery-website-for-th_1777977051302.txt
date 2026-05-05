@@ -1,0 +1,109 @@
+Build a mobile-first nightlife discovery website for the Gold Coast called “Tonight GC”.
+
+The goal is to help users decide where to go tonight based on their vibe, not browse hundreds of random events.
+
+Create a clean, dark, modern website with a nightlife feel.
+
+Core pages:
+1. Home page
+2. Tonight page
+3. Venues page
+4. Venue detail page
+5. Admin-style page for manually adding/editing venues and events
+
+Main user flow:
+- User lands on homepage
+- They choose their vibe:
+  - Big Night
+  - Chill Drinks
+  - Date Night
+  - Cheap Night
+  - Live Music
+  - Food First
+- The site then shows the best venue/event recommendations for tonight
+
+Homepage:
+- Big hero section:
+  “Where should you go tonight on the Gold Coast?”
+- Subtext:
+  “Pick your vibe. See the best spots tonight.”
+- Vibe selector cards
+- Button: “Find my night”
+
+Tonight page:
+- Show “Top Picks Tonight”
+- Cards for venues/events
+- Each card includes:
+  - Venue name
+  - Suburb
+  - vibe tags
+  - best arrival time
+  - estimated crowd level
+  - price level
+  - short reason why it is recommended
+  - button: “View details”
+
+Venues page:
+- List venues by suburb:
+  - Surfers Paradise
+  - Broadbeach
+  - Burleigh
+  - Miami
+  - Coolangatta
+- Filters:
+  - vibe
+  - suburb
+  - price
+  - crowd level
+
+Venue detail page:
+- Venue name
+- suburb
+- best nights
+- best arrival time
+- dress code
+- music type
+- price level
+- crowd level
+- quick summary
+- “Good for” tags
+- “Not ideal for” tags
+
+Admin-style page:
+- Form to add a venue
+- Fields:
+  - venue name
+  - suburb
+  - vibe tags
+  - price level
+  - crowd level
+  - best arrival time
+  - description
+  - image URL
+- Save added venues locally for now using browser local storage
+
+Use sample venue data for now:
+- Surfers Pavilion, Surfers Paradise, Chill Drinks, Date Night
+- Cali Beach, Surfers Paradise, Big Night
+- The Avenue, Surfers Paradise, Big Night
+- Burleigh Pavilion, Burleigh, Chill Drinks, Date Night
+- Miami Marketta, Miami, Live Music, Food First
+- Loose Moose, Broadbeach, Food First, Big Night
+- Justin Lane, Burleigh, Date Night, Food First
+- Coolangatta Hotel, Coolangatta, Live Music, Big Night
+
+Design:
+- Mobile-first
+- Dark background
+- Clean card layout
+- Neon accent but not too much
+- Smooth buttons
+- Simple navigation
+- Make it look like a real startup MVP
+
+Tech:
+- Use React
+- Use simple state management
+- Use localStorage for saved venues
+- Make the code clean and easy to edit
+- Include comments where I can edit the venue data
