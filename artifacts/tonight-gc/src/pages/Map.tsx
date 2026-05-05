@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, CircleMarker, useMap, useMapEvents } from "rea
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Users, Flame, Music, DollarSign } from "lucide-react";
 import L from "leaflet";
-import { getVenues, SUBURBS, SuburbType, VibeType, Venue } from "@/data/venues";
+import { getVenues, getVenueHeatAtStep, SUBURBS, SuburbType, VibeType, Venue } from "@/data/venues";
 import {
   GC_CENTER, GC_ZOOM, formatTimeStep, getHeatAtStep,
   SUBURB_COORDS, TIME_STEP_MIN, TIME_STEP_MAX, DEFAULT_TIME_STEP,
@@ -87,7 +87,7 @@ function HeatLayer({ venues, timeStep }: { venues: Venue[]; timeStep: number }) 
 
       for (const venue of venues) {
         if (venue.lat == null || venue.lng == null) continue;
-        const heat = getHeatAtStep(venue.suburb, timeStep);
+        const heat = getVenueHeatAtStep(venue, timeStep);
         if (heat < 6) continue;
 
         // Layer point: fixed in Leaflet's pixel space, pane transform handles pan
@@ -160,7 +160,7 @@ function VenuePins({
     <>
       {venues.map((venue) => {
         if (venue.lat == null || venue.lng == null) return null;
-        const heat = getHeatAtStep(venue.suburb, timeStep);
+        const heat = getVenueHeatAtStep(venue, timeStep);
         const fillColor = heatToHex(heat);
         return (
           <CircleMarker
@@ -209,7 +209,7 @@ function VenueCard({ venue, onTap }: { venue: Venue; onTap: (v: Venue) => void }
   const hotspot = getHotspotLevel(interaction);
   const priceStr = "$".repeat(venue.priceLevel);
   const flameCount = venue.crowdLevel === "High" ? 3 : venue.crowdLevel === "Medium" ? 2 : 1;
-  const heat = getHeatAtStep(venue.suburb, DEFAULT_TIME_STEP);
+  const heat = getVenueHeatAtStep(venue, DEFAULT_TIME_STEP);
   const pinColor = heatToHex(heat);
 
   return (
@@ -268,7 +268,7 @@ function VenueCard({ venue, onTap }: { venue: Venue; onTap: (v: Venue) => void }
 function InteractionSheet({ venue, onClose }: { venue: Venue; onClose: () => void }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [vote, setVote] = useState<UserVote>(() => getUserVote(venue.id));
-  const heat = getHeatAtStep(venue.suburb, DEFAULT_TIME_STEP);
+  const heat = getVenueHeatAtStep(venue, DEFAULT_TIME_STEP);
   const pinColor = heatToHex(heat);
 
   const VIBE_LABELS: Record<VibeVoteTag, string> = {
