@@ -24,7 +24,7 @@ export default function Home() {
 
   const handleFindNight = () => {
     if (selectedVibe) {
-      setLocation("/tonight");
+      setLocation("/map");
     }
   };
 

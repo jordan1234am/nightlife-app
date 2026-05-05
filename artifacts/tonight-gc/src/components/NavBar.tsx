@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Moon, MapPin, Settings } from "lucide-react";
+import { Home, Map, MapPin, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function NavBar() {
@@ -7,7 +7,7 @@ export function NavBar() {
 
   const navItems = [
     { href: "/", label: "Home", icon: Home },
-    { href: "/tonight", label: "Tonight", icon: Moon },
+    { href: "/map", label: "Map", icon: Map },
     { href: "/venues", label: "Venues", icon: MapPin },
     { href: "/admin", label: "Admin", icon: Settings },
   ];
@@ -20,10 +20,10 @@ export function NavBar() {
           {navItems.map((item) => {
             const isActive = location === item.href;
             const Icon = item.icon;
-            
+
             return (
               <li key={item.href} className="flex-1">
-                <Link 
+                <Link
                   href={item.href}
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 py-2 rounded-lg transition-colors",
@@ -48,14 +48,14 @@ export function NavBar() {
               Tonight <span className="text-primary">GC</span>
             </span>
           </Link>
-          
+
           <ul className="flex items-center gap-8">
             {navItems.map((item) => {
               const isActive = location === item.href;
-              
+
               return (
                 <li key={item.href}>
-                  <Link 
+                  <Link
                     href={item.href}
                     className={cn(
                       "text-sm font-medium transition-colors hover:text-primary",
