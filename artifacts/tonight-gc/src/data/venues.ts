@@ -1,3 +1,8 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = 'https://fapkqseinfpdbdbzptsb.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhcGtxc2VpbmZwZGJkYnpwdHNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNjYyMzgsImV4cCI6MjA5Mzg0MjIzOH0.0RjBGxuSJJ772q514fQB5ttSiF8Rug6EJ3diGTY1OOw'
+const supabase = createClient(supabaseUrl, supabaseKey)
 // ============================
 // VENUE DATA
 // Core required fields: name, suburb, lat, lng, imageUrl,
