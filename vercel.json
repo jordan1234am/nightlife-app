@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm --filter @workspace/tonight-gc run build",
+  "outputDirectory": "artifacts/tonight-gc/dist",
+  "installCommand": "pnpm install",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
