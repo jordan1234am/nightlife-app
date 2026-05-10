@@ -1,0 +1,11 @@
+[build]
+  command = "npm install -g pnpm@10.26.1 && pnpm install --frozen-lockfile && pnpm --filter @workspace/tonight-gc run build"
+  publish = "artifacts/tonight-gc/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
