@@ -1,6 +1,22 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Venue, SuburbType, getVenues } from "@/data/venues";
+import { Venue, SuburbType, VibeType, getVenues } from "@/data/venues";
+
+const KNOWN_VIBES: VibeType[] = [
+  "Big Night", "Chill Drinks", "Date Night", "Cheap Night", "Live Music", "Food First",
+];
+const CROWD_LEVELS = ["Low", "Medium", "High"] as const;
+
+function toVibes(raw: string[] | undefined): VibeType[] {
+  if (!raw || raw.length === 0) return ["Big Night"];
+  const filtered = raw.filter((v): v is VibeType => KNOWN_VIBES.includes(v as VibeType));
+  return filtered.length > 0 ? filtered : ["Big Night"];
+}
+
+function toCrowdLevel(raw: string | undefined): "Low" | "Medium" | "High" {
+  if (CROWD_LEVELS.includes(raw as "Low" | "Medium" | "High")) return raw as "Low" | "Medium" | "High";
+  return "Medium";
+}
 
 // ─── Suburb normaliser ────────────────────────────────────────────────────────
 const KNOWN_SUBURBS: SuburbType[] = [
@@ -19,9 +35,37 @@ function normaliseSuburb(raw: string | null | undefined): SuburbType {
   return "Surfers Paradise";
 }
 
+// ─── Supabase row shape ───────────────────────────────────────────────────────
+interface VenueRow {
+  id: string | number;
+  name: string;
+  suburb?: string;
+  address?: string;
+  latitude?: number | string;
+  lat?: number | string;
+  longitude?: number | string;
+  lng?: number | string;
+  image_url?: string;
+  peak_time?: string;
+  closing_time?: string;
+  price_level?: number;
+  activity_score?: number;
+  tags?: string[];
+  category?: string;
+  vibes?: string[];
+  crowd_level?: string;
+  best_arrival_time?: string;
+  best_nights?: string[];
+  dress_code?: string;
+  music_type?: string;
+  description?: string;
+  good_for?: string[];
+  not_ideal_for?: string[];
+  recommended_reason?: string;
+}
+
 // ─── Row → Venue mapper ───────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function rowToVenue(row: any): Venue | null {
+function rowToVenue(row: VenueRow): Venue | null {
   const lat = Number(row.latitude ?? row.lat);
   const lng = Number(row.longitude ?? row.lng);
   if (!row.name || Number.isNaN(lat) || Number.isNaN(lng)) return null;
@@ -38,11 +82,11 @@ function rowToVenue(row: any): Venue | null {
       "https://images.unsplash.com/photo-1566127992631-137a642a90f4?w=800&q=80",
     peakTime: row.peak_time ?? "10pm",
     closingTime: row.closing_time ?? "2am",
-    priceLevel: row.price_level ?? 2,
+    priceLevel: ([1, 2, 3].includes(row.price_level ?? 2) ? row.price_level ?? 2 : 2) as 1 | 2 | 3,
     activityScore: row.activity_score ?? 65,
     tags: row.tags ?? (row.category ? [row.category] : ["Bar"]),
-    vibes: row.vibes ?? ["Big Night"],
-    crowdLevel: row.crowd_level ?? "Medium",
+    vibes: toVibes(row.vibes),
+    crowdLevel: toCrowdLevel(row.crowd_level),
     bestArrivalTime: row.best_arrival_time ?? "9pm",
     bestNights: row.best_nights ?? ["Friday", "Saturday"],
     dressCode: row.dress_code ?? "Casual",
