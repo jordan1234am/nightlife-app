@@ -1,7 +1,5 @@
 {
-  "framework": null,
-  "installCommand": "npm install -g pnpm@10.26.1 && pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @workspace/tonight-gc run build",
-  "outputDirectory": "artifacts/tonight-gc/dist",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
