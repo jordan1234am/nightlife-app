@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useRoute, Link } from "wouter";
 import { NavBar } from "@/components/NavBar";
-import { getVenueById, Venue } from "@/data/venues";
+import { Venue } from "@/data/venues";
+import { useVenues } from "@/hooks/useVenues";
 import { ArrowLeft, MapPin, Clock, Users, Music, AlertTriangle, CheckCircle, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -9,13 +10,14 @@ import { motion } from "framer-motion";
 export default function VenueDetail() {
   const [, params] = useRoute("/venues/:id");
   const [venue, setVenue] = useState<Venue | null>(null);
+  const { venues } = useVenues();
 
   useEffect(() => {
-    if (params?.id) {
-      const v = getVenueById(params.id);
+    if (params?.id && venues.length > 0) {
+      const v = venues.find((v) => v.id === params.id);
       if (v) setVenue(v);
     }
-  }, [params?.id]);
+  }, [params?.id, venues]);
 
   if (!venue) {
     return (

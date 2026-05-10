@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { NavBar } from "@/components/NavBar";
 import { VenueCard } from "@/components/VenueCard";
-import { getVenues, SUBURBS, VIBES, SuburbType, VibeType } from "@/data/venues";
+import { SUBURBS, VIBES, SuburbType, VibeType } from "@/data/venues";
+import { useVenues } from "@/hooks/useVenues";
 import { motion } from "framer-motion";
 import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ export default function Venues() {
   const [selectedSuburb, setSelectedSuburb] = useState<SuburbType | "All">("All");
   const [selectedVibe, setSelectedVibe] = useState<VibeType | "All">("All");
   
-  const allVenues = useMemo(() => getVenues(), []);
+  const { venues: allVenues } = useVenues();
   
   const filteredVenues = useMemo(() => {
     return allVenues.filter(venue => {

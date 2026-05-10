@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Flame, DollarSign, Clock, Users, MapPin, Ticket, Timer } from "lucide-react";
 import L from "leaflet";
 import { getVenues, getVenueHeatAtStep, SUBURBS, SuburbType, Venue, VibeType, parseTimeToStep } from "@/data/venues";
+import { useVenues } from "@/hooks/useVenues";
 import {
   GC_CENTER, GC_ZOOM, formatTimeStep, getHeatAtStep,
   SUBURB_COORDS, TIME_STEP_MIN, TIME_STEP_MAX, DEFAULT_TIME_STEP,
@@ -579,7 +580,7 @@ function SuburbSheet({
 }: {
   suburb: SuburbType; timeStep: number; onClose: () => void; onVenueTap: (v: Venue) => void;
 }) {
-  const allVenues = getVenues();
+  const { venues: allVenues } = useVenues();
   const suburbVenues = allVenues.filter((v) => v.suburb === suburb);
   const heat = getHeatAtStep(suburb, timeStep);
   const heatColor = heatToHex(heat);
@@ -749,7 +750,7 @@ export default function Map() {
   const [timeStep, setTimeStep] = useState(DEFAULT_TIME_STEP);
   const [selectedSuburb, setSelectedSuburb] = useState<SuburbType | null>(null);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
-  const allVenues = getVenues();
+  const { venues: allVenues } = useVenues();
 
   useEffect(() => {
     const saved = sessionStorage.getItem("tonightgc_vibe") as VibeType;

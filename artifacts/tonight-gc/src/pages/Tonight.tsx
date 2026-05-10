@@ -2,14 +2,19 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { NavBar } from "@/components/NavBar";
 import { VenueCard } from "@/components/VenueCard";
-import { getVenues, Venue, VibeType } from "@/data/venues";
+import { Venue, VibeType } from "@/data/venues";
+import { useVenues } from "@/hooks/useVenues";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Tonight() {
   const [, setLocation] = useLocation();
   const [selectedVibe, setSelectedVibe] = useState<VibeType | null>(null);
-  const [venues, setVenues] = useState<Venue[]>([]);
+  const { venues: allVenues } = useVenues();
+
+  const venues = selectedVibe
+    ? allVenues.filter((v) => v.vibes.includes(selectedVibe))
+    : [];
 
   useEffect(() => {
     const vibe = sessionStorage.getItem("tonightgc_vibe") as VibeType;
@@ -17,14 +22,7 @@ export default function Tonight() {
       setLocation("/");
       return;
     }
-    
     setSelectedVibe(vibe);
-    
-    const allVenues = getVenues();
-    const filtered = allVenues.filter(v => v.vibes.includes(vibe));
-    
-    // Sort roughly by recommendation power - for a real app this would have an algorithm
-    setVenues(filtered);
   }, [setLocation]);
 
   if (!selectedVibe) return null;

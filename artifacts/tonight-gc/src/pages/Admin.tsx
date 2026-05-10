@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { NavBar } from "@/components/NavBar";
 import {
-  getVenues, saveVenue, deleteVenue, Venue,
+  saveVenue, deleteVenue, Venue,
   VIBES, SUBURBS, VENUE_TAGS, SEED_VENUE_IDS,
   VibeType, SuburbType,
 } from "@/data/venues";
+import { useVenues } from "@/hooks/useVenues";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,14 +55,14 @@ const blankForm = (): Omit<Venue, "id"> => ({
 });
 
 export default function Admin() {
-  const [venues, setVenues] = useState<Venue[]>([]);
+  const { venues, loading: venuesLoading } = useVenues();
+  const [localVenues, setLocalVenues] = useState<Venue[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<Venue, "id">>(blankForm());
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { toast } = useToast();
 
-  const load = () => setVenues(getVenues());
-  useEffect(() => { load(); }, []);
+  useEffect(() => { setLocalVenues(venues); }, [venues]);
 
   const reset = () => {
     setForm(blankForm());
@@ -109,7 +110,7 @@ export default function Admin() {
   const handleDelete = (id: string) => {
     if (!confirm("Delete this venue?")) return;
     deleteVenue(id);
-    load();
+    setLocalVenues(prev => prev.filter(v => v.id !== id));
     toast({ title: "Venue deleted" });
   };
 
@@ -120,8 +121,9 @@ export default function Admin() {
     }
     const id = editingId
       || form.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    saveVenue({ ...form, id } as Venue);
-    load();
+    const saved = { ...form, id } as Venue;
+    saveVenue(saved);
+    setLocalVenues(prev => editingId ? prev.map(v => v.id === id ? saved : v) : [...prev, saved]);
     reset();
     toast({ title: editingId ? "Venue updated" : "Venue added", description: form.name });
   };
@@ -135,7 +137,7 @@ export default function Admin() {
       <main className="max-w-5xl mx-auto px-4 pt-8">
         <div className="mb-8">
           <h1 className="text-4xl font-black font-display text-white mb-1">Venue Admin</h1>
-          <p className="text-zinc-500 text-sm">{venues.length} venues · {venues.length - SEED_VENUE_IDS.length} custom</p>
+          <p className="text-zinc-500 text-sm">{localVenues.length} venues · {localVenues.filter(v => !SEED_VENUE_IDS.includes(v.id)).length} custom</p>
         </div>
 
         <div className="grid md:grid-cols-5 gap-8">
@@ -438,7 +440,7 @@ export default function Admin() {
           <div className="md:col-span-2">
             <div className="sticky top-4 space-y-3 max-h-[80vh] overflow-y-auto pr-1 custom-scrollbar">
               <h3 className="font-bold text-white text-lg font-display">All Venues</h3>
-              {venues.map(venue => {
+              {localVenues.map(venue => {
                 const isCustom = !SEED_VENUE_IDS.includes(venue.id);
                 const color = scoreToColor(venue.activityScore ?? 65);
                 return (
