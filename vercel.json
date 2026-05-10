@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd artifacts/tonight-gc && pnpm run build",
+  "outputDirectory": "artifacts/tonight-gc/dist",
+  "framework": "vite"
+}
